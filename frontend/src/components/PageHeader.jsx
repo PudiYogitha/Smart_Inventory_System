@@ -1,0 +1,8 @@
+export default function PageHeader({ eyebrow, title, description, action }) {
+  return (
+    <header className="page-header">
+      <div><p className="eyebrow">{eyebrow}</p><h1>{title}<span className="heading-dot">.</span></h1><p className="muted">{description}</p></div>
+      {action && <div className="header-action">{action}</div>}
+    </header>
+  );
+}
