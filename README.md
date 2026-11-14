@@ -18,6 +18,12 @@ A lightweight inventory and sales app for small businesses. It includes a respon
 
 For a single-origin production-style run, build the React frontend with `npm run build`, then start the server with `npm start` and open [http://localhost:3000](http://localhost:3000).
 
+## Deploy the frontend to GitHub Pages
+
+The `main` branch deploys the static frontend through GitHub Actions to [https://pudiyogitha.github.io/Smart_Inventory_System/](https://pudiyogitha.github.io/Smart_Inventory_System/). If Pages has not been enabled for the repository yet, set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**. The workflow also needs Actions to be enabled for the repository.
+
+GitHub Pages hosts only the frontend. Login, inventory, and sales need the Node.js API and MongoDB to be deployed separately. Once the API is available, add a repository Actions variable named `VITE_API_URL` with the API origin (for example, `https://inventory-api.example.com`, without `/api`) and configure the API to allow requests from the Pages origin. A new push will rebuild the frontend with that API URL.
+
 Mongoose creates the collections and indexes on startup. The included MongoDB container runs as a single-node replica set because sale, inventory, and stock-movement updates use transactions. To use MongoDB Atlas instead, set `MONGODB_URI` to the Atlas connection string and ensure the cluster supports transactions. The first store can be initialized with the setup endpoint; each new business can also register its own administrator account. Team accounts for an existing business are created by an administrator on the Team page.
 
 ## Features

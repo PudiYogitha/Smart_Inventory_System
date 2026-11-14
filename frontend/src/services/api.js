@@ -2,6 +2,7 @@ const TOKEN_KEY = "stockroom-token";
 const USER_KEY = "stockroom-user";
 const QUEUE_KEY = "stockroom-sale-queue";
 const CACHE_PREFIX = "stockroom-cache:";
+const API_ORIGIN = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
 export const session = {
   token: () => localStorage.getItem(TOKEN_KEY),
@@ -22,9 +23,12 @@ export const session = {
 };
 
 export async function api(path, options = {}) {
+  if (import.meta.env.VITE_GITHUB_PAGES === "true" && !API_ORIGIN) {
+    throw new Error("The frontend is deployed, but the backend API URL is not configured yet.");
+  }
   const headers = { "Content-Type": "application/json", ...options.headers };
   if (session.token()) headers.Authorization = `Bearer ${session.token()}`;
-  const response = await fetch(`/api${path}`, { ...options, headers });
+  const response = await fetch(`${API_ORIGIN}/api${path}`, { ...options, headers });
   const body = response.status === 204 ? null : await response.json();
   if (!response.ok) {
     const error = new Error(body?.error || "Something went wrong.");

@@ -1,12 +1,13 @@
 const CACHE_NAME = "stockroom-react-v1";
+const APP_ROOT = new URL(self.registration.scope).pathname;
 
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    const response = await fetch("/");
+    const response = await fetch(APP_ROOT);
     if (!response.ok) throw new Error("Could not cache the app shell.");
     const html = await response.clone().text();
-    await cache.put("/", response);
+    await cache.put(APP_ROOT, response);
     const assets = [...html.matchAll(/(?:src|href)="([^"]+\.(?:js|css))"/g)].map((match) => match[1]);
     if (assets.length) await cache.addAll(assets);
   })());
@@ -30,5 +31,5 @@ self.addEventListener("fetch", (event) => {
       caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
     }
     return response;
-  }).catch(async () => (await caches.match(request)) || (request.mode === "navigate" ? caches.match("/") : Response.error())));
+  }).catch(async () => (await caches.match(request)) || (request.mode === "navigate" ? caches.match(APP_ROOT) : Response.error())));
 });
