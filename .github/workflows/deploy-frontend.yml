@@ -35,6 +35,21 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+      - name: Validate backend API URL
+        run: |
+          node - <<'NODE'
+          let apiUrl;
+          try {
+            apiUrl = new URL(process.env.VITE_API_URL);
+          } catch {
+            console.error("Set the Actions variable VITE_API_URL to the HTTPS origin of the deployed API, without /api.");
+            process.exit(1);
+          }
+          if (apiUrl.protocol !== "https:" || apiUrl.pathname !== "/" || apiUrl.search || apiUrl.hash) {
+            console.error("VITE_API_URL must be an HTTPS origin without a path, query, or fragment.");
+            process.exit(1);
+          }
+          NODE
       - name: Install dependencies
         run: npm ci
         working-directory: frontend

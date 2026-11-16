@@ -13,6 +13,12 @@ if (!process.env.MONGODB_URI || !process.env.JWT_SECRET || process.env.JWT_SECRE
 
 const app = express();
 app.disable("x-powered-by");
+const allowedOrigins = new Set(
+  (process.env.FRONTEND_ORIGINS || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+);
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -29,6 +35,19 @@ app.use(helmet({
     }
   }
 }));
+app.use((req, res, next) => {
+  const origin = req.get("Origin");
+  if (!origin || !allowedOrigins.has(origin)) return next();
+
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Vary", "Origin");
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, POST, PATCH, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    return res.sendStatus(204);
+  }
+  next();
+});
 app.use(express.json({ limit: "256kb" }));
 app.use("/api/auth", rateLimit({ windowMs: 15 * 60 * 1000, limit: 100 }));
 app.use("/api/auth", require("./routes/auth"));

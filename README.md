@@ -22,7 +22,15 @@ For a single-origin production-style run, build the React frontend with `npm run
 
 The `main` branch deploys the static frontend through GitHub Actions to [https://pudiyogitha.github.io/Smart_Inventory_System/](https://pudiyogitha.github.io/Smart_Inventory_System/). If Pages has not been enabled for the repository yet, set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**. The workflow also needs Actions to be enabled for the repository.
 
-GitHub Pages hosts only the frontend. Login, inventory, and sales need the Node.js API and MongoDB to be deployed separately. Once the API is available, add a repository Actions variable named `VITE_API_URL` with the API origin (for example, `https://inventory-api.example.com`, without `/api`) and configure the API to allow requests from the Pages origin. A new push will rebuild the frontend with that API URL.
+GitHub Pages hosts only the frontend. Deploy the API and MongoDB separately before using sign-in:
+
+1. Create a MongoDB Atlas cluster and database user. The app uses transactions, so use an Atlas replica set. Allow the Render service to connect in the Atlas network access list.
+2. In Render, create a **Blueprint** from this repository. The root `render.yaml` configures the Node API, generates a `JWT_SECRET`, and allows the GitHub Pages origin. Provide the Atlas connection string when prompted for `MONGODB_URI`.
+3. Wait for the Render service health check at `/api/health` to pass, then copy its HTTPS service origin (for example, `https://stockroom-api.onrender.com`).
+4. In the repository, open **Settings → Secrets and variables → Actions → Variables** and create `VITE_API_URL` with that origin, without `/api`.
+5. Run the **Deploy frontend to GitHub Pages** workflow from the Actions tab. It now fails early if `VITE_API_URL` is missing or is not an HTTPS origin.
+
+The API's `FRONTEND_ORIGINS` setting must contain the frontend origin, `https://pudiyogitha.github.io` (no path or trailing slash). For local development, `.env.example` allows `http://localhost:5173`.
 
 Mongoose creates the collections and indexes on startup. The included MongoDB container runs as a single-node replica set because sale, inventory, and stock-movement updates use transactions. To use MongoDB Atlas instead, set `MONGODB_URI` to the Atlas connection string and ensure the cluster supports transactions. The first store can be initialized with the setup endpoint; each new business can also register its own administrator account. Team accounts for an existing business are created by an administrator on the Team page.
 
