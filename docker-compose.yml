@@ -2,8 +2,6 @@ services:
   mongodb:
     image: mongo:7
     command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
-    environment:
-      MONGO_INITDB_DATABASE: inventory
     ports:
       - "27017:27017"
     volumes:
@@ -16,7 +14,7 @@ services:
         ]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
 
 volumes:
   inventory-db:

@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  businessId: { type: mongoose.Schema.Types.ObjectId, ref: "Business", required: true, index: true },
-  name: { type: String, required: true, trim: true, minlength: 1, maxlength: 120 },
+  businessId: { type: mongoose.Schema.Types.ObjectId, ref: "Business", required: true },
+  name: { type: String, required: true, trim: true, maxlength: 120 },
   email: { type: String, required: true, trim: true, lowercase: true, maxlength: 254 },
-  passwordHash: { type: String, required: true },
-  role: { type: String, enum: ["admin", "staff"], required: true, default: "staff" }
+  passwordHash: { type: String, required: true, select: false },
+  role: { type: String, enum: ["admin", "staff"], default: "staff", required: true }
 }, { timestamps: true });
 
 userSchema.index({ email: 1 }, { unique: true });

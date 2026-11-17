@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const systemSettingSchema = new mongoose.Schema({
-  _id: { type: String },
+  _id: String,
   createdAt: { type: Date, default: Date.now }
 }, { versionKey: false });
 

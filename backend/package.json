@@ -1,0 +1,21 @@
+{
+  "name": "smart-inventory-api",
+  "version": "1.0.0",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "check": "node --check server.js && node --check config/db.js && node --check controllers/authController.js && node --check controllers/productController.js && node --check controllers/salesController.js && node --check controllers/stockController.js && node --check controllers/reportController.js && node --check controllers/userController.js && node --check middleware/authMiddleware.js && node --check middleware/roleMiddleware.js && node --check routes/authRoutes.js && node --check routes/productRoutes.js && node --check routes/salesRoutes.js && node --check routes/stockRoutes.js && node --check routes/reportRoutes.js && node --check routes/userRoutes.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "smart-inventory-system": "file:.."
+  }
+}

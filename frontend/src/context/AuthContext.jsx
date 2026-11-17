@@ -5,7 +5,7 @@ export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(session.user());
-  const [loading, setLoading] = useState(Boolean(session.token()));
+  const [loading, setLoading] = useState(Boolean(session.token() && navigator.onLine));
 
   useEffect(() => {
     let active = true;
@@ -14,34 +14,21 @@ export function AuthProvider({ children }) {
       return () => { active = false; };
     }
     api("/auth/me").then(({ user: current }) => {
-      if (active) {
-        session.saveUser(current);
-        setUser(current);
-      }
+      if (active) { session.saveUser(current); setUser(current); }
     }).catch((error) => {
-      if (!active) return;
-      if (error.status === 401) {
-        session.clear();
-        setUser(null);
-      }
+      if (active && error.status === 401) { session.clear(); setUser(null); }
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
 
   useEffect(() => {
-    const handleOnline = () => syncSales().catch((error) => console.error("Queued sales could not sync:", error));
-    window.addEventListener("online", handleOnline);
-    return () => window.removeEventListener("online", handleOnline);
+    const online = () => syncSales().catch((error) => console.error("Queued sales could not sync:", error));
+    window.addEventListener("online", online);
+    return () => window.removeEventListener("online", online);
   }, []);
 
-  const signIn = useCallback((data) => {
-    session.save(data);
-    setUser(data.user);
-  }, []);
-  const signOut = useCallback(() => {
-    session.clear();
-    setUser(null);
-  }, []);
+  const signIn = useCallback((data) => { session.save(data); setUser(data.user); }, []);
+  const signOut = useCallback(() => { session.clear(); setUser(null); }, []);
   const value = useMemo(() => ({ user, loading, signIn, signOut }), [user, loading, signIn, signOut]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

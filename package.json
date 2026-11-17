@@ -2,24 +2,12 @@
   "name": "smart-inventory-system",
   "version": "1.0.0",
   "private": true,
-  "description": "Lightweight, offline-friendly inventory management for small businesses",
-  "main": "backend/server.js",
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "node --watch backend/server.js",
-    "build": "npm --prefix frontend run build",
-    "check": "node --check backend/server.js && node --check backend/config/db.js && node --check backend/models/Business.js && node --check backend/models/User.js && node --check backend/models/Product.js && node --check backend/models/Sale.js && node --check backend/models/StockMovement.js && node --check backend/models/SystemSetting.js && node --check backend/utils/errors.js && node --check backend/routes/auth.js && node --check backend/routes/products.js && node --check backend/routes/sales.js && node --check backend/routes/movements.js && node --check backend/routes/reports.js && node --check backend/routes/staff.js"
-  },
-  "engines": {
-    "node": ">=20"
-  },
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "express-rate-limit": "^7.5.0",
-    "helmet": "^8.0.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.9.5"
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm start --prefix backend",
+    "check": "npm run check --prefix backend"
   }
 }

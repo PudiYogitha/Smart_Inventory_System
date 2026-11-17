@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import Navbar from "./components/Navbar.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 import Login from "./pages/Login.jsx";
@@ -14,33 +15,28 @@ import Staff from "./pages/Staff.jsx";
 import Toast from "./components/Toast.jsx";
 
 function Workspace() {
-  return (
-    <ProtectedRoute>
-      <Sidebar />
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/products/new" element={<AddProduct />} />
-        <Route path="/products/:id/edit" element={<EditProduct />} />
-        <Route path="/sales" element={<Sales />} />
-        <Route path="/stock-movements" element={<StockMovements />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/staff" element={<ProtectedRoute adminOnly><Staff /></ProtectedRoute>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </ProtectedRoute>
-  );
+  return <ProtectedRoute>
+    <Sidebar />
+    <Navbar />
+    <Routes>
+      <Route index element={<Dashboard />} />
+      <Route path="products" element={<Products />} />
+      <Route path="products/new" element={<AddProduct />} />
+      <Route path="products/:id/edit" element={<EditProduct />} />
+      <Route path="sales" element={<Sales />} />
+      <Route path="stock-movements" element={<StockMovements />} />
+      <Route path="reports" element={<Reports />} />
+      <Route path="staff" element={<ProtectedRoute adminOnly><Staff /></ProtectedRoute>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+    <Toast />
+  </ProtectedRoute>;
 }
 
 export default function App() {
-  return (
-    <>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/*" element={<Workspace />} />
-      </Routes>
-      <Toast />
-    </>
-  );
+  return <Routes>
+    <Route path="/login" element={<Login />} />
+    <Route path="/register" element={<Register />} />
+    <Route path="/*" element={<Workspace />} />
+  </Routes>;
 }

@@ -1,14 +1,13 @@
-.product-form-card { width: min(720px, 100%); padding: 25px; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .field { display: grid; gap: 7px; margin: 0 0 14px; color: #59635b; font-size: 11px; font-weight: 700; }
 .field input, .field select { width: 100%; min-height: 39px; padding: 0 10px; border: 1px solid #e5e9e4; border-radius: 6px; outline: none; color: #313a33; background: #fff; font-size: 12px; }
 .field input:focus, .field select:focus { border-color: #7eaa8d; box-shadow: 0 0 0 3px rgba(71, 133, 91, .1); }
 .field input::placeholder { color: #b3b8b3; }
 .field small { color: #a0a69f; font-size: 10px; font-weight: 400; }
+.product-form-card { width: min(720px, 100%); padding: 25px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .field-span { grid-column: span 2; }
 .form-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 10px; }
-.login-page { min-height: 100vh; background: #fff; }
-.login-layout { display: grid; min-height: 100vh; grid-template-columns: minmax(320px, .93fr) minmax(400px, 1.07fr); }
+.login-layout { display: grid; min-height: 100vh; grid-template-columns: minmax(320px, .93fr) minmax(400px, 1.07fr); background: #fff; }
 .login-intro { display: flex; flex-direction: column; justify-content: space-between; min-height: 100vh; padding: 35px clamp(35px, 6vw, 90px); color: #fff; background: #245c43; }
 .brand-light { color: #fff; }
 .brand-light .brand-mark { color: #285d43; background: #fff; }

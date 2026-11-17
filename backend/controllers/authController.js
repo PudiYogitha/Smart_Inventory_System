@@ -1,50 +1,46 @@
-const express = require("express");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const Business = require("../models/Business");
 const User = require("../models/User");
 const SystemSetting = require("../models/SystemSetting");
 const { withTransaction } = require("../config/db");
-const { authenticate } = require("../middleware/auth");
-const { asyncHandler } = require("../utils/errors");
+const generateToken = require("../utils/generateToken");
 
-const router = express.Router();
-
-router.get("/setup-status", asyncHandler(async (_req, res) => {
+exports.setupStatus = async (_req, res) => {
   res.json({ configured: Boolean(await User.exists({})) });
-}));
+};
 
-router.post("/setup", asyncHandler(async (req, res) => {
-  const invalid = validateRegistration(req.body);
-  if (invalid) return res.status(400).json({ error: invalid });
+exports.setup = async (req, res) => {
+  const error = validateRegistration(req.body);
+  if (error) return res.status(400).json({ error });
   const user = await createBusinessUser(req.body, true);
-  res.status(201).json({ token: signToken(user), user: publicUser(user) });
-}));
+  res.status(201).json(sessionDto(user));
+};
 
-router.post("/register", asyncHandler(async (req, res) => {
-  const invalid = validateRegistration(req.body);
-  if (invalid) return res.status(400).json({ error: invalid });
+exports.register = async (req, res) => {
+  const error = validateRegistration(req.body);
+  if (error) return res.status(400).json({ error });
   const user = await createBusinessUser(req.body, false);
-  res.status(201).json({ token: signToken(user), user: publicUser(user) });
-}));
+  res.status(201).json(sessionDto(user));
+};
 
-router.post("/login", asyncHandler(async (req, res) => {
+exports.login = async (req, res) => {
   const { email, password } = req.body;
   if (typeof email !== "string" || typeof password !== "string") {
     return res.status(400).json({ error: "Email and password are required." });
   }
-  const user = await User.findOne({ email: email.trim().toLowerCase() }).select("+passwordHash").populate("businessId");
+  const user = await User.findOne({ email: email.trim().toLowerCase() })
+    .select("+passwordHash").populate("businessId");
   if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
     return res.status(401).json({ error: "Email or password is incorrect." });
   }
-  res.json({ token: signToken(user), user: publicUser(user) });
-}));
+  res.json(sessionDto(user));
+};
 
-router.get("/me", authenticate, asyncHandler(async (req, res) => {
+exports.me = async (req, res) => {
   const user = await User.findById(req.user.id).populate("businessId");
   if (!user) return res.status(401).json({ error: "User account no longer exists." });
   res.json({ user: publicUser(user) });
-}));
+};
 
 async function createBusinessUser(data, initialOnly) {
   const passwordHash = await bcrypt.hash(data.password, 12);
@@ -69,13 +65,8 @@ async function createBusinessUser(data, initialOnly) {
   });
 }
 
-function signToken(user) {
-  const business = user.businessId;
-  return jwt.sign(
-    { id: String(user._id), businessId: String(business._id || business), role: user.role, name: user.name },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || "12h" }
-  );
+function sessionDto(user) {
+  return { token: generateToken(user), user: publicUser(user) };
 }
 
 function publicUser(user) {
@@ -98,10 +89,6 @@ function validateRegistration({ businessName, name, email, password } = {}) {
     return "Business name and your name must be 120 characters or fewer.";
   }
   if (password.length < 10) return "Use a password with at least 10 characters.";
-  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return "Enter a valid email address.";
-  }
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Enter a valid email address.";
   return null;
 }
-
-module.exports = router;

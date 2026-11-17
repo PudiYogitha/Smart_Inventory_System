@@ -1,72 +1,61 @@
-# Stockroom · Smart Inventory System
+# Smart Inventory System
 
-A lightweight inventory and sales app for small businesses. It includes a responsive dashboard, product catalogue, barcode-entry sales, low-stock alerts, sales-based restock suggestions, administrator/staff access, and an offline-capable frontend.
+A React inventory dashboard and Express/MongoDB API for small businesses. It supports item management, stock adjustments, barcode-assisted checkout, low-stock alerts, sales trends, restock estimates, role-based access, and offline sale queuing.
 
 ## Requirements
 
 - Node.js 20+
-- Docker Desktop for the included MongoDB replica set, or a MongoDB Atlas URI
+- Docker Desktop for local MongoDB, or a MongoDB Atlas replica set
 
-## Run locally
+## Local setup
 
-1. Copy `.env.example` to `.env` and set `JWT_SECRET` to a unique random value of at least 32 characters.
-2. Start MongoDB: `docker compose up -d mongodb`
-3. Install dependencies: `npm install`
-4. In one terminal, start the API: `npm run dev`
-5. In another terminal, start the React frontend: `npm --prefix frontend run dev`
-6. Open [http://localhost:5173](http://localhost:5173). The first visit lets you create the business and its administrator account.
+1. Copy `.env.example` to `backend/.env` (the server also reads a root `.env` as a fallback). Set a random `JWT_SECRET` of at least 32 characters. Keep `.env` private.
+2. Start the local MongoDB replica set: `docker compose up -d mongodb`
+3. Install dependencies: `npm run install:all`
+4. Start the API: `npm run dev:backend`
+5. In another terminal, start React: `npm run dev:frontend`
+6. Open [http://localhost:5173](http://localhost:5173) and create the first administrator account.
 
-For a single-origin production-style run, build the React frontend with `npm run build`, then start the server with `npm start` and open [http://localhost:3000](http://localhost:3000).
+The local database runs as a single-node replica set because sale, inventory, and stock movement changes use MongoDB transactions. For Atlas, configure a replica-set `MONGODB_URI` in `.env`.
 
-## Deploy the frontend to GitHub Pages
+To run the production build on one origin, run `npm run build`, then `npm start` and open [http://localhost:3000](http://localhost:3000).
 
-The `main` branch deploys the static frontend through GitHub Actions to [https://pudiyogitha.github.io/Smart_Inventory_System/](https://pudiyogitha.github.io/Smart_Inventory_System/). If Pages has not been enabled for the repository yet, set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**. The workflow also needs Actions to be enabled for the repository.
+## Project layout
 
-GitHub Pages hosts only the frontend. Deploy the API and MongoDB separately before using sign-in:
+- `frontend/src/components` — navigation, protected routes, reusable UI
+- `frontend/src/pages` — login, dashboard, products, sales, movements, reports, team
+- `frontend/src/context` and `frontend/src/hooks` — authentication state
+- `frontend/src/services` — API client, offline caching and sale sync queue
+- `backend/controllers` — business logic for API endpoints
+- `backend/routes` — Express route definitions
+- `backend/models` — Mongoose models and indexes
+- `backend/middleware` — authentication and role checks
 
-1. Create a MongoDB Atlas cluster and database user. The app uses transactions, so use an Atlas replica set. Allow the Render service to connect in the Atlas network access list.
-2. In Render, create a **Blueprint** from this repository. The root `render.yaml` configures the Node API, generates a `JWT_SECRET`, and allows the GitHub Pages origin. Provide the Atlas connection string when prompted for `MONGODB_URI`.
-3. Wait for the Render service health check at `/api/health` to pass, then copy its HTTPS service origin (for example, `https://stockroom-api.onrender.com`).
-4. In the repository, open **Settings → Secrets and variables → Actions → Variables** and create `VITE_API_URL` with that origin, without `/api`.
-5. Run the **Deploy frontend to GitHub Pages** workflow from the Actions tab. It now fails early if `VITE_API_URL` is missing or is not an HTTPS origin.
+## Roles and API
 
-The API's `FRONTEND_ORIGINS` setting must contain the frontend origin, `https://pudiyogitha.github.io` (no path or trailing slash). For local development, `.env.example` allows `http://localhost:5173`.
+API endpoints are under `/api`; authenticated endpoints use `Authorization: Bearer <token>`.
 
-Mongoose creates the collections and indexes on startup. The included MongoDB container runs as a single-node replica set because sale, inventory, and stock-movement updates use transactions. To use MongoDB Atlas instead, set `MONGODB_URI` to the Atlas connection string and ensure the cluster supports transactions. The first store can be initialized with the setup endpoint; each new business can also register its own administrator account. Team accounts for an existing business are created by an administrator on the Team page.
+| Method | Endpoint | Purpose |
+|---|---|---|
+| POST | `/auth/setup`, `/auth/register`, `/auth/login` | Initialize a store, register a business, or sign in |
+| GET | `/auth/me`, `/auth/setup-status` | Current user and initial setup status |
+| GET / POST | `/products` | Search/paginate products (`limit` ≤ 200) or create one |
+| PATCH / DELETE | `/products/:id` | Admin-only product edit/removal |
+| POST | `/stock/products/:id/adjustments` | Adjust stock and record the reason |
+| GET | `/stock/movements` | Stock movement history |
+| GET / POST | `/sales` | Recent sales or record a sale |
+| POST | `/sales/sync` | Idempotently sync up to 100 offline sales |
+| GET | `/reports/dashboard`, `/reports/trends` | Dashboard metrics, sales trends, restock estimates |
+| GET / POST / DELETE | `/staff` | Admin-only team management |
+| GET | `/health` | MongoDB-backed health check |
 
-## Features
+Admins can edit/remove products and manage staff. Staff can record sales and make stock adjustments. Barcode scanners that type into the barcode field are supported; camera scanning is not bundled.
 
-- **Inventory:** Create, search, update, and remove products, with a 100,000-item limit per business. SKU and barcode are unique within each business.
-- **Stock tracking:** Record opening quantities and stock adjustments, each with a movement history entry. Sales decrement stock transactionally.
-- **Low-stock alerts:** Dashboard alerts show items whose quantity is at or below their reorder threshold.
-- **Sales:** Record sales by selecting an item, typing a SKU/name, or scanning a barcode into the barcode field. USB/Bluetooth scanners that type a barcode are supported; a camera-scanning library is not bundled.
-- **Restocking:** Reports use each item’s last-30-day sales rate and target 30 days of stock plus its alert threshold. Suggestions are estimates, not purchase orders.
-- **Team access:** Admins can add/remove team members and assign admin or staff roles. Staff can record sales and make stock adjustments; product edits/deletion and team administration require an admin.
-- **Offline-first interface:** The service worker caches the app shell and static assets. Recent GET responses are cached in the browser, and sales entered offline are queued locally and synced with idempotency keys after reconnection. Product edits and stock adjustments require a connection.
-- **Sales history:** Sales are retained with product, staff, quantity, totals, and timestamps for reporting.
+## Notes
 
-## API overview
-
-All endpoints are served from `/api`. Except for health and sign-in/setup, requests require `Authorization: Bearer <token>`.
-
-| Method | Endpoint | Access | Purpose |
-|---|---|---|---|
-| GET / POST | `/auth/setup-status`, `/auth/setup` | Public, first setup only | Check or initialize the first business |
-| POST | `/auth/register` | Public | Register another business and its administrator |
-| POST | `/auth/login` | Public | Sign in |
-| GET | `/auth/me` | Signed in | Current user |
-| GET / POST | `/products` | Signed in | Search/paginate products (`limit` ≤ 200, `offset`) or create products |
-| PATCH / DELETE | `/products/:id` | Admin | Edit or remove a product |
-| POST | `/products/:id/adjustments` | Signed in | Adjust quantity and record reason |
-| GET / POST | `/sales` | Signed in | List or record a sale |
-| POST | `/sales/sync` | Signed in | Idempotently sync up to 100 offline sales |
-| GET | `/stock/movements` | Signed in | Stock movement history |
-| GET | `/reports/dashboard`, `/reports/trends` | Signed in | Dashboard metrics, history, restock estimates |
-| GET / POST / DELETE | `/staff` | Admin | Manage team accounts |
-| GET | `/health` | Public | Database-backed health check |
-
-## Scaling and production notes
-
-The API is stateless and uses MongoDB transactions, tenant-scoped indexes, and a per-business item counter to enforce the 100,000-item limit safely. Run multiple Node processes behind a load balancer and size `DB_POOL_SIZE` for the total number of app instances and MongoDB connection limits. For sustained million-row-per-day workloads, production operations should also configure MongoDB capacity, backups, monitoring, and an appropriate sales retention/archival strategy. The included Docker Compose setup is for local development, not a production deployment.
-
-Use HTTPS in production; set a strong secret in a secret manager, configure MongoDB TLS/credentials and backups, and serve the frontend/API from the same origin. Browser storage is device-local and is not encrypted; avoid shared/public devices for offline sales.
+- Products are tenant-scoped, indexed by business/SKU/barcode, and limited to 100,000 active items per business.
+- Sales decrement stock transactionally and use idempotency keys to prevent duplicate offline sync.
+- The frontend shell and static assets are cached for offline use. Sales are queued in browser storage; product edits and stock adjustments require a connection.
+- Restock estimates use the previous 30-day sales rate and aim for 30 days of stock plus the configured low-stock threshold. They are estimates, not purchase orders.
+- For sustained million-transaction-per-day usage, size MongoDB and connection pools for deployment scale, monitor/backup the cluster, and plan sales-data retention. The provided Docker Compose setup is for local development.
+- Use HTTPS and secret-managed credentials in production. Browser offline storage is device-local and not encrypted.
